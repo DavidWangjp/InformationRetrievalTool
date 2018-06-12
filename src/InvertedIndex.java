@@ -1,7 +1,8 @@
-import sun.reflect.generics.tree.Tree;
-
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.TreeMap;
 
 class InvertedIndex
 {
@@ -12,45 +13,37 @@ class InvertedIndex
         add('.');
         add('+');
         add('-');
+        add('\"');
+        add('\'');
     }};
 
     private static final String path = ".\\src";
 
-    /**
-     * Score and positions information of a doc in a index term
-     */
-    private static class IndexInfo implements Serializable
-    {
-        ArrayList<Integer> positions = new ArrayList<>();
-
-        public float score()
-        {
-            return positions.size();
-        }
-
-        @Override
-        public String toString()
-        {
-            return super.toString();
-        }
-    }
-
+    // stores all tokens
     private static HashSet<String> tokenDictionary = new HashSet<>();
-    private static TreeMap<String, TreeMap<Integer, IndexInfo>> invertedIndex = new TreeMap<>();
+
+    // stores all terms and doc frequency
+    private static HashMap<String, Integer> termDictionary = new HashMap<>();
+
+    private static TreeMap<String, TreeMap<Integer, ArrayList<Integer>>> invertedIndex = new TreeMap<>();
     private static Stemmer stemmer = new Stemmer();
-    private static HashMap<Integer, Integer> docLen = new HashMap<>();
 
     static void init()
     {
         System.out.println("Initializing...");
+        long startTime = System.currentTimeMillis();
         File invertedIndexFile = new File(path + "\\InvertedIndex");
         File tokenDictionaryFile = new File(path + "\\TokenDictionary");
+        File termDictionaryFile = new File(path + "\\TermDictionary");
         try
         {
             ObjectInputStream invertedIndexInputStream = new ObjectInputStream(new FileInputStream(invertedIndexFile));
             ObjectInputStream tokenDictionaryInputStream = new ObjectInputStream(new FileInputStream(tokenDictionaryFile));
-            invertedIndex = (TreeMap<String, TreeMap<Integer, IndexInfo>>) invertedIndexInputStream.readObject();
+            ObjectInputStream termDictionaryInputStream = new ObjectInputStream(new FileInputStream(termDictionaryFile));
+
+            invertedIndex = (TreeMap<String, TreeMap<Integer, ArrayList<Integer>>>) invertedIndexInputStream.readObject();
             tokenDictionary = (HashSet<String>) tokenDictionaryInputStream.readObject();
+            termDictionary = (HashMap<String, Integer>) termDictionaryInputStream.readObject();
         }
         catch (IOException | ClassNotFoundException e)
         {
@@ -59,21 +52,23 @@ class InvertedIndex
             {
                 ObjectOutputStream invertedIndexOutputStream = new ObjectOutputStream(new FileOutputStream(invertedIndexFile));
                 ObjectOutputStream tokenDictionaryOutputStream = new ObjectOutputStream(new FileOutputStream(tokenDictionaryFile));
+                ObjectOutputStream termDictionaryOutputStream = new ObjectOutputStream(new FileOutputStream(termDictionaryFile));
+
                 invertedIndexOutputStream.writeObject(invertedIndex);
                 tokenDictionaryOutputStream.writeObject(tokenDictionary);
+                termDictionaryOutputStream.writeObject(termDictionary);
             }
             catch (IOException e1)
             {
                 e1.printStackTrace();
             }
         }
-        System.out.println("Finish");
+        System.out.println("Finish in " + (System.currentTimeMillis() - startTime) + "ms");
     }
 
     private static void build()
     {
-        File dir = new File(path + "\\..\\Reuters");
-        System.out.println(dir);
+        File dir = new File(path + "\\Reuters");
 
         String[] files = dir.list();
 
@@ -108,6 +103,12 @@ class InvertedIndex
                          */
                         tokenDictionary.add(token);
 
+                        if (Stopword.stopwrods.contains(token))
+                        {
+                            position++;
+                            continue;
+                        }
+
                         /*
                         convert to term and add to inverted index
                          */
@@ -115,29 +116,33 @@ class InvertedIndex
                         stemmer.stem();
                         String term = stemmer.toString();
 
-                        System.out.println(term);
+                        if (termDictionary.containsKey(term))
+                            termDictionary.put(term, termDictionary.get(term) + 1);
+                        else
+                            termDictionary.put(term, 1);
 
                         if (invertedIndex.containsKey(term))
                         {
-                            TreeMap<Integer, IndexInfo> index = invertedIndex.get(term);
+                            TreeMap<Integer, ArrayList<Integer>> index = invertedIndex.get(term);
                             if (index.containsKey(docId))
-                                invertedIndex.get(term).get(docId).positions.add(position);
+                                invertedIndex.get(term).get(docId).add(position);
                             else
                             {
-                                IndexInfo info = new IndexInfo();
-                                info.positions.add(position);
-                                index.put(docId, info);
+                                ArrayList<Integer> positions = new ArrayList<>();
+                                positions.add(position);
+                                index.put(docId, positions);
                             }
                         }
                         else
                         {
-                            IndexInfo info = new IndexInfo();
-                            info.positions.add(position);
-                            invertedIndex.put(term, new TreeMap<Integer, IndexInfo>()
+                            ArrayList<Integer> positions = new ArrayList<>();
+                            positions.add(position);
+                            invertedIndex.put(term, new TreeMap<Integer, ArrayList<Integer>>()
                             {{
-                                put(docId, info);
+                                put(docId, positions);
                             }});
                         }
+                        position++;
                     }
                 }
             }
@@ -170,75 +175,4 @@ class InvertedIndex
         }
         return token;
     }
-
-    public static void retrieval(String query) {
-        TreeMap<Integer, Double> docScore = new TreeMap<>();
-
-        String[] words = query.trim().split("(,\\s)|(\\.\\s)|\"| ");
-        IndexInfo indexInfo;
-        for (String word : words)
-        {
-            if (word == null||word.isEmpty())
-                continue;
-
-            // do stemming for query
-            stemmer.add(word.toCharArray(), word.length());
-            stemmer.stem();
-            String term = stemmer.toString();
-
-            if (invertedIndex.containsKey(term))
-            {
-                TreeMap<Integer, InvertedIndex.IndexInfo> index = invertedIndex.get(term);
-                // iterate for all docs
-                Iterator iter = index.entrySet().iterator();
-                while(iter.hasNext()) {
-                    Map.Entry entry = (Map.Entry) iter.next();
-                    Integer docId = (Integer) entry.getKey();
-                    InvertedIndex.IndexInfo info = (InvertedIndex.IndexInfo)entry.getValue();
-                    // score continue to be updated
-                    double score = info.score()*1.0;
-                    if (docScore.containsKey(docId)) {
-                        docScore.put(docId, score);
-                    } else {
-                        docScore.put(docId, docScore.get(docId)+score);
-                    }
-                }
-
-            } else {
-                System.out.println("No such term "+term);
-            }
-        }
-
-//        Iterator iter = docScore.entrySet().iterator();
-//        while(iter.hasNext()) {
-//            Map.Entry entry = (Map.Entry) iter.next();
-//            Integer docId = (Integer) entry.getKey();
-//            Double score = (Double) entry.getValue();
-//
-//            // divide length
-//            if (docLen.containsKey(docId)&&docLen.get(docId) != 0) {
-//                docScore.put(docId, score/docLen.get(docId));
-//            }
-//
-//
-//        }
-
-
-        // sort according to score
-        class scoreComparator implements Comparator<Map.Entry<Integer, Double>>
-        {
-            public int compare(Map.Entry<Integer,Double> m,Map.Entry<Integer,Double> n)
-            {
-                return (int)(n.getValue()-m.getValue());
-            }
-        }
-
-        List<Map.Entry<Integer, Double>> entryArrayList = new ArrayList<>(docScore.entrySet());
-        Collections.sort(entryArrayList, Comparator.comparing(Map.Entry::getValue));
-        for (Map.Entry entry:entryArrayList) {
-            System.out.println(entry.getValue());
-        }
-    }
-
-    //return null;
 }
