@@ -28,6 +28,23 @@ class InvertedIndex
     private static TreeMap<String, TreeMap<Integer, ArrayList<Integer>>> invertedIndex = new TreeMap<>();
     private static Stemmer stemmer = new Stemmer();
 
+    /**
+     * convert word to term, return null if stopword
+     *
+     * @param word
+     * @return
+     */
+    static String getTerm(String word)
+    {
+        String token = getToken(word.trim().toLowerCase());
+        if (token == null || Stopword.stopwrods.contains(token))
+            return null;
+        stemmer.add(token.toCharArray(), token.length());
+        stemmer.stem();
+        return stemmer.toString();
+
+    }
+
     static void init()
     {
         System.out.println("Initializing...");
