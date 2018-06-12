@@ -1,5 +1,6 @@
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.TreeMap;
 
@@ -16,40 +17,31 @@ class InvertedIndex
 
     private static final String path = ".\\src";
 
-    /**
-     * Score and positions information of a doc in a index term
-     */
-    private static class IndexInfo implements Serializable
-    {
-        ArrayList<Integer> positions = new ArrayList<>();
-
-        public float score()
-        {
-            return positions.size();
-        }
-
-        @Override
-        public String toString()
-        {
-            return super.toString();
-        }
-    }
-
+    // stores all tokens
     private static HashSet<String> tokenDictionary = new HashSet<>();
-    private static TreeMap<String, TreeMap<Integer, IndexInfo>> invertedIndex = new TreeMap<>();
+
+    // stores all terms and doc frequency
+    private static HashMap<String, Integer> termDictionary = new HashMap<>();
+
+    private static TreeMap<String, TreeMap<Integer, ArrayList<Integer>>> invertedIndex = new TreeMap<>();
     private static Stemmer stemmer = new Stemmer();
+
 
     static void init()
     {
         System.out.println("Initializing...");
         File invertedIndexFile = new File(path + "\\InvertedIndex");
         File tokenDictionaryFile = new File(path + "\\TokenDictionary");
+        File termDictionaryFile = new File(path + "\\TermDictionary");
         try
         {
             ObjectInputStream invertedIndexInputStream = new ObjectInputStream(new FileInputStream(invertedIndexFile));
             ObjectInputStream tokenDictionaryInputStream = new ObjectInputStream(new FileInputStream(tokenDictionaryFile));
-            invertedIndex = (TreeMap<String, TreeMap<Integer, IndexInfo>>) invertedIndexInputStream.readObject();
+            ObjectInputStream termDictionaryInputStream = new ObjectInputStream(new FileInputStream(termDictionaryFile));
+
+            invertedIndex = (TreeMap<String, TreeMap<Integer, ArrayList<Integer>>>) invertedIndexInputStream.readObject();
             tokenDictionary = (HashSet<String>) tokenDictionaryInputStream.readObject();
+            termDictionary = (HashMap<String, Integer>) termDictionaryInputStream.readObject();
         }
         catch (IOException | ClassNotFoundException e)
         {
@@ -58,8 +50,11 @@ class InvertedIndex
             {
                 ObjectOutputStream invertedIndexOutputStream = new ObjectOutputStream(new FileOutputStream(invertedIndexFile));
                 ObjectOutputStream tokenDictionaryOutputStream = new ObjectOutputStream(new FileOutputStream(tokenDictionaryFile));
+                ObjectOutputStream termDictionaryOutputStream = new ObjectOutputStream(new FileOutputStream(termDictionaryFile));
+
                 invertedIndexOutputStream.writeObject(invertedIndex);
                 tokenDictionaryOutputStream.writeObject(tokenDictionary);
+                termDictionaryOutputStream.writeObject(termDictionary);
             }
             catch (IOException e1)
             {
@@ -109,29 +104,34 @@ class InvertedIndex
                         /*
                         convert to term and add to inverted index
                          */
-                        stemmer.add("1.2".toCharArray(), 3);
+                        stemmer.add(token.toCharArray(), token.length());
                         stemmer.stem();
                         String term = stemmer.toString();
 
+                        if (termDictionary.containsKey(term))
+                            termDictionary.put(term, termDictionary.get(term) + 1);
+                        else
+                            termDictionary.put(term, 1);
+
                         if (invertedIndex.containsKey(term))
                         {
-                            TreeMap<Integer, IndexInfo> index = invertedIndex.get(term);
+                            TreeMap<Integer, ArrayList<Integer>> index = invertedIndex.get(term);
                             if (index.containsKey(docId))
-                                invertedIndex.get(term).get(docId).positions.add(position);
+                                invertedIndex.get(term).get(docId).add(position);
                             else
                             {
-                                IndexInfo info = new IndexInfo();
-                                info.positions.add(position);
-                                index.put(docId, info);
+                                ArrayList<Integer> positions = new ArrayList<>();
+                                positions.add(position);
+                                index.put(docId, positions);
                             }
                         }
                         else
                         {
-                            IndexInfo info = new IndexInfo();
-                            info.positions.add(position);
-                            invertedIndex.put(term, new TreeMap<Integer, IndexInfo>()
+                            ArrayList<Integer> positions = new ArrayList<>();
+                            positions.add(position);
+                            invertedIndex.put(term, new TreeMap<Integer, ArrayList<Integer>>()
                             {{
-                                put(docId, info);
+                                put(docId, positions);
                             }});
                         }
                     }
