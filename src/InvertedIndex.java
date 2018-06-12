@@ -1,7 +1,7 @@
+import sun.reflect.generics.tree.Tree;
+
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.TreeMap;
+import java.util.*;
 
 class InvertedIndex
 {
@@ -38,6 +38,7 @@ class InvertedIndex
     private static HashSet<String> tokenDictionary = new HashSet<>();
     private static TreeMap<String, TreeMap<Integer, IndexInfo>> invertedIndex = new TreeMap<>();
     private static Stemmer stemmer = new Stemmer();
+    private static HashMap<Integer, Integer> docLen = new HashMap<>();
 
     static void init()
     {
@@ -71,7 +72,8 @@ class InvertedIndex
 
     private static void build()
     {
-        File dir = new File(path + "\\Reuters");
+        File dir = new File(path + "\\..\\Reuters");
+        System.out.println(dir);
 
         String[] files = dir.list();
 
@@ -109,9 +111,11 @@ class InvertedIndex
                         /*
                         convert to term and add to inverted index
                          */
-                        stemmer.add("1.2".toCharArray(), 3);
+                        stemmer.add(token.toCharArray(), token.length());
                         stemmer.stem();
                         String term = stemmer.toString();
+
+                        System.out.println(term);
 
                         if (invertedIndex.containsKey(term))
                         {
@@ -166,4 +170,75 @@ class InvertedIndex
         }
         return token;
     }
+
+    public static void retrieval(String query) {
+        TreeMap<Integer, Double> docScore = new TreeMap<>();
+
+        String[] words = query.trim().split("(,\\s)|(\\.\\s)|\"| ");
+        IndexInfo indexInfo;
+        for (String word : words)
+        {
+            if (word == null||word.isEmpty())
+                continue;
+
+            // do stemming for query
+            stemmer.add(word.toCharArray(), word.length());
+            stemmer.stem();
+            String term = stemmer.toString();
+
+            if (invertedIndex.containsKey(term))
+            {
+                TreeMap<Integer, InvertedIndex.IndexInfo> index = invertedIndex.get(term);
+                // iterate for all docs
+                Iterator iter = index.entrySet().iterator();
+                while(iter.hasNext()) {
+                    Map.Entry entry = (Map.Entry) iter.next();
+                    Integer docId = (Integer) entry.getKey();
+                    InvertedIndex.IndexInfo info = (InvertedIndex.IndexInfo)entry.getValue();
+                    // score continue to be updated
+                    double score = info.score()*1.0;
+                    if (docScore.containsKey(docId)) {
+                        docScore.put(docId, score);
+                    } else {
+                        docScore.put(docId, docScore.get(docId)+score);
+                    }
+                }
+
+            } else {
+                System.out.println("No such term "+term);
+            }
+        }
+
+//        Iterator iter = docScore.entrySet().iterator();
+//        while(iter.hasNext()) {
+//            Map.Entry entry = (Map.Entry) iter.next();
+//            Integer docId = (Integer) entry.getKey();
+//            Double score = (Double) entry.getValue();
+//
+//            // divide length
+//            if (docLen.containsKey(docId)&&docLen.get(docId) != 0) {
+//                docScore.put(docId, score/docLen.get(docId));
+//            }
+//
+//
+//        }
+
+
+        // sort according to score
+        class scoreComparator implements Comparator<Map.Entry<Integer, Double>>
+        {
+            public int compare(Map.Entry<Integer,Double> m,Map.Entry<Integer,Double> n)
+            {
+                return (int)(n.getValue()-m.getValue());
+            }
+        }
+
+        List<Map.Entry<Integer, Double>> entryArrayList = new ArrayList<>(docScore.entrySet());
+        Collections.sort(entryArrayList, Comparator.comparing(Map.Entry::getValue));
+        for (Map.Entry entry:entryArrayList) {
+            System.out.println(entry.getValue());
+        }
+    }
+
+    //return null;
 }
