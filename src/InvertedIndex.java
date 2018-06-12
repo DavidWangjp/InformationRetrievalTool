@@ -13,6 +13,8 @@ class InvertedIndex
         add('.');
         add('+');
         add('-');
+        add('\"');
+        add('\'');
     }};
 
     private static final String path = ".\\src";
@@ -26,10 +28,10 @@ class InvertedIndex
     private static TreeMap<String, TreeMap<Integer, ArrayList<Integer>>> invertedIndex = new TreeMap<>();
     private static Stemmer stemmer = new Stemmer();
 
-
     static void init()
     {
         System.out.println("Initializing...");
+        long startTime = System.currentTimeMillis();
         File invertedIndexFile = new File(path + "\\InvertedIndex");
         File tokenDictionaryFile = new File(path + "\\TokenDictionary");
         File termDictionaryFile = new File(path + "\\TermDictionary");
@@ -61,7 +63,7 @@ class InvertedIndex
                 e1.printStackTrace();
             }
         }
-        System.out.println("Finish");
+        System.out.println("Finish in " + (System.currentTimeMillis() - startTime) + "ms");
     }
 
     private static void build()
@@ -101,6 +103,12 @@ class InvertedIndex
                          */
                         tokenDictionary.add(token);
 
+                        if (Stopword.stopwrods.contains(token))
+                        {
+                            position++;
+                            continue;
+                        }
+
                         /*
                         convert to term and add to inverted index
                          */
@@ -134,6 +142,7 @@ class InvertedIndex
                                 put(docId, positions);
                             }});
                         }
+                        position++;
                     }
                 }
             }
