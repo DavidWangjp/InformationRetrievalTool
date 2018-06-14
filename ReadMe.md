@@ -3,4 +3,5 @@
 检索单个单词 retrieveWord(String query)，得到的结果存放在LinkedHashMap里  
 
 * 每个entry的key是docId，
-* 每个entry的value是单词在文档中出现的位置链表，用ArrayList<Integer>来表示，已排序
+* 每个entry的value是单词在文档中出现的位置链表，用ArrayList<Integer>来表示
+* 检索得到的文档已经按照已排序
