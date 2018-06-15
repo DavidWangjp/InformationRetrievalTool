@@ -18,7 +18,7 @@ class InvertedIndex
         add('\'');
     }};
 
-    private static final String path = ".\\src";
+    private static final String path = "src";
 
     // stores all tokens
     static HashSet<String> tokenDictionary = new HashSet<>();
@@ -56,16 +56,16 @@ class InvertedIndex
     static void init()
     {
         System.out.println("Initializing...");
-        File dir = new File(path + "\\Reuters\\test");
+        File dir = new File(path);
 
         String[] files = dir.list();
         FILE_SIZE = files.length;
 
         long startTime = System.currentTimeMillis();
-        File invertedIndexFile = new File(path + "\\InvertedIndex");
-        File tokenDictionaryFile = new File(path + "\\TokenDictionary");
-        File termDictionaryFile = new File(path + "\\TermDictionary");
-        File docLenFile = new File(path + "\\DocLen");
+        File invertedIndexFile = new File(path + "/InvertedIndex");
+        File tokenDictionaryFile = new File(path + "/TokenDictionary");
+        File termDictionaryFile = new File(path + "/TermDictionary");
+        File docLenFile = new File(path + "/DocLen");
 
         try
         {
@@ -89,7 +89,6 @@ class InvertedIndex
                 ObjectOutputStream termDictionaryOutputStream = new ObjectOutputStream(new FileOutputStream(termDictionaryFile));
                 ObjectOutputStream docLenOutputStream = new ObjectOutputStream(new FileOutputStream(docLenFile));
 
-
                 invertedIndexOutputStream.writeObject(invertedIndex);
                 tokenDictionaryOutputStream.writeObject(tokenDictionary);
                 termDictionaryOutputStream.writeObject(termDictionary);
@@ -105,14 +104,14 @@ class InvertedIndex
 
     private static void build()
     {
-        File dir = new File(path + "\\Reuters\\test");
+        File dir = new File(path + "/Reuters/test");
         String[] files = dir.list();
 
         assert files != null;
         for (String file : files)
         {
             int docId = Integer.parseInt(file.split("\\.")[0]);
-            String file_name = dir + "\\" + file;
+            String file_name = dir + "/" + file;
             HashMap<String, Integer> fileVector = new HashMap<>();
             try
             {
