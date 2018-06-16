@@ -18,7 +18,7 @@ class InvertedIndex
         add('\'');
     }};
 
-    private static final String path = "src";
+    static final String path = "src";
 
     // stores all tokens
     static HashSet<String> tokenDictionary = new HashSet<>();
@@ -104,12 +104,16 @@ class InvertedIndex
 
     private static void build()
     {
-        File dir = new File(path + "/Reuters/test");
+        File dir = new File(path + "/Reuters");
         String[] files = dir.list();
 
         assert files != null;
         for (String file : files)
         {
+            if(!file.endsWith(".html")){
+                //skip .DS_Store
+                return;
+            }
             int docId = Integer.parseInt(file.split("\\.")[0]);
             String file_name = dir + "/" + file;
             HashMap<String, Integer> fileVector = new HashMap<>();
