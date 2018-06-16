@@ -21,7 +21,7 @@ public class Correction {
     //字典
     private HashMap<String, Integer> dictionary = null;
     private static final String alphabet = "abcdefghijklmnopqrstuvwxyz";
-    private static final double pow = 0.8;
+//    private static final double pow = 0.8;
     public Correction(){
         try
         {
@@ -46,7 +46,6 @@ public class Correction {
         for (int i = 0; i < word.length(); i++){
             binary[i] = new BinaryWord(word.substring(0, i), word.substring(i));
         }
-
         //deletes
         for (int i = 0; i < binary.length; i++){
             if (binary[i].rw.length() > 1){
@@ -55,14 +54,12 @@ public class Correction {
                 words.add(binary[i].lw);
             }
         }
-
         //transposes
         for (int i = 0; i < binary.length; i++){
             if (binary[i].rw.length() > 1){
                 words.add(binary[i].lw + binary[i].rw.charAt(1) + binary[i].rw.charAt(0) + binary[i].rw.substring(2));
             }
         }
-
         //replaces & inserts
         for (int i = 0; i < binary.length; i++){
             for (int j = 0; j < alphabet.length(); j++){
@@ -75,28 +72,7 @@ public class Correction {
         for (int i = 0; i < alphabet.length(); i++){
             words.add(word + alphabet.charAt(i));
         }
-
         return words;
-    }
-    /**
-     * 编辑距离为2
-     * @param word
-     * @return
-     */
-    private ArrayList<String> editDist2(String word){
-        ArrayList<String> dist1 = editDist1(word);
-        //加入编辑距离为2且出现在字典中的词
-        ArrayList<String> dist2 = new ArrayList<String>();
-        for (int i = 0; i < dist1.size(); i++){
-            ArrayList<String> temp = editDist1(dist1.get(i));
-            for (int j = 0; j < temp.size(); j++)
-            {
-                if(dictionary.containsKey(temp.get(j))) {
-                    dist2.add(temp.get(j));
-                }
-            }
-        }
-        return dist2;
     }
 
     /**
@@ -104,9 +80,8 @@ public class Correction {
      * @param word
      * @return
      */
-    private ArrayList<String> editDistN(String word){
-        final int N = 4;
-        Vector<ArrayList<String> > dists = new Vector<>();
+    private Vector<ArrayList<String>> editDistN(String word, int N){
+        Vector<ArrayList<String>> dists = new Vector<>();
 
         ArrayList<String> dist = editDist1(word);
         dists.add(dist);
@@ -124,38 +99,25 @@ public class Correction {
             }
             dists.add(dist2);
         }
-        return dists.elementAt(N - 1);
+        return dists;
     }
-
 
     /**
      * 获得最大概率的词
      * @param arr
-     * @param islegal 是否都是合法单词
      * @return
      */
-    public String maxPx(ArrayList<String> arr, boolean islegal){
+    public String maxPx(ArrayList<String> arr){
         int frq = 0;
         String result = null;
-        if (islegal){
-            for (int i = 0; i < arr.size(); i++){
+        for (int i = 0; i < arr.size(); i++){
+            if (dictionary.containsKey(arr.get(i))){
                 if (frq < dictionary.get(arr.get(i))){
                     frq = dictionary.get(arr.get(i));
                     result = arr.get(i);
                 }
             }
         }
-        else{
-            for (int i = 0; i < arr.size(); i++){
-                if (dictionary.containsKey(arr.get(i))){
-                    if (frq < dictionary.get(arr.get(i))){
-                        frq = dictionary.get(arr.get(i));
-                        result = arr.get(i);
-                    }
-                }
-            }
-        }
-
         return result;
     }
     /**
@@ -173,37 +135,22 @@ public class Correction {
      * 英文词纠正
      * 纠正数：1
      * new Correction(String word).correct()
-     * @param null
+     * @param wd
      * @return
      */
     public String correct(String wd){
         if (legalSpell(wd)){
             return wd;
         }
-        String r1 = maxPx(editDist1(wd), false);
-        int score1 = 0;
-        if (r1 != null){
-            score1 = dictionary.get(r1);
+        final int N = 3;
+        Vector<ArrayList<String>> dists = editDistN(wd, N);
+        for(int i = 0 ; i < N; ++i){
+            String r = maxPx(dists.elementAt(i));
+            if(r != null){
+                return r;
+            }
         }
-        String r2 = maxPx(editDist2(wd), true);
-        int score2 = 0;
-        if (r2 != null){
-            score2 = dictionary.get(r2);
-        }
-        String r3 = maxPx(editDistN(wd), true);
-        int scoreN = 0;
-        if(r3 != null){
-            scoreN = dictionary.get(r3);
-        }
-
-        if (scoreN > score1 * pow) {
-            return r3;
-        }
-        if (scoreN == score1 * pow){
-            return wd;
-        }
-
-        return r1;
+        return wd;
     }
     /**
      * 对多个词进行纠错
@@ -227,7 +174,8 @@ public class Correction {
     }
     public static void main(String[] args){
 
-        String[] query = {"calenda", "ar", "ture", "canlendae", "conclsion", "ture"};
+
+        String[] query = {"conclsion", "calenda", "ar", "true", "canlendae",  "ture"};
         System.out.println(new Correction().correct(query));
         long st = System.currentTimeMillis();
         for (int i = 0; i < query.length; i++){
