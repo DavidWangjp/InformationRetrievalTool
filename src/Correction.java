@@ -18,10 +18,9 @@ public class Correction {
         }
     }
 
-    //字典
     private HashMap<String, Integer> dictionary = null;
     private static final String alphabet = "abcdefghijklmnopqrstuvwxyz";
-//    private static final double pow = 0.8;
+
     public Correction(){
         try
         {
@@ -35,7 +34,7 @@ public class Correction {
         dictionary = InvertedIndex.termDictionary;
     }
     /**
-     * 编辑距离为1的所有可能的词
+     * 距离为1的所有可能的词
      * @param word
      * @return
      */
@@ -76,9 +75,9 @@ public class Correction {
     }
 
     /**
-     * 编辑距离为N
+     * 距离为N的所有可能的词
      * @param word
-     * @return
+     * @return 距离分别为1-N的词的集合
      */
     private Vector<ArrayList<String>> editDistN(String word, int N){
         Vector<ArrayList<String>> dists = new Vector<>();
@@ -103,7 +102,7 @@ public class Correction {
     }
 
     /**
-     * 获得最大概率的词
+     * 获得相同距离词频率最大的词
      * @param arr
      * @return
      */
@@ -121,7 +120,7 @@ public class Correction {
         return result;
     }
     /**
-     * 是否是合法单词(需要纠正)
+     * 是否是合法单词
      * @param word
      * @return
      */
@@ -173,15 +172,12 @@ public class Correction {
         return hascorrect;
     }
     public static void main(String[] args){
-
-
         String[] query = {"conclsion", "calenda", "ar", "true", "canlendae",  "ture"};
         System.out.println(new Correction().correct(query));
         long st = System.currentTimeMillis();
         for (int i = 0; i < query.length; i++){
             System.out.println(query[i]);
         }
-
 //        System.out.println((System.currentTimeMillis() - st)/ 1000.0 + "s");
     }
 }

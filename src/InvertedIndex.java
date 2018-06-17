@@ -105,6 +105,7 @@ class InvertedIndex
     private static void build()
     {
         File dir = new File(path + "/Reuters");
+
         String[] files = dir.list();
 
         assert files != null;

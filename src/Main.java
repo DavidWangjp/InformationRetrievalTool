@@ -7,8 +7,8 @@ public class Main
 
     public static void main(String[] args)
     {
-
-        LinkedHashMap<Integer, ArrayList<Integer>> res = RetrievalUtil.retrieveWord("grain");
+        String testWord = "grain";
+        LinkedHashMap<Integer, ArrayList<Integer>> res = RetrievalUtil.retrieveWord(testWord);
         for (Map.Entry entry: res.entrySet()) {
             Integer docId = (Integer) entry.getKey();
             ArrayList<Integer> positions = (ArrayList<Integer>)entry.getValue();
