@@ -113,7 +113,7 @@ class InvertedIndex
         {
             if(!file.endsWith(".html")){
                 //skip .DS_Store
-                return;
+                continue;
             }
             int docId = Integer.parseInt(file.split("\\.")[0]);
             String file_name = dir + "/" + file;
