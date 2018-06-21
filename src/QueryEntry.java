@@ -13,10 +13,10 @@ public class QueryEntry {
 
     public static List<Integer> andQuery(List<Integer> lpos, List<Integer> rpos) {
         List<Integer> res = new ArrayList<>();
-        for (int i = 0; i < lpos.size(); ++i) {
-            for (int j = 0; j < rpos.size(); ++j) {
-                if (lpos.get(i).equals(rpos.get(j))) {
-                    res.add(lpos.get(i));
+        for (Integer lpo : lpos) {
+            for (Integer rpo : rpos) {
+                if (lpo.equals(rpo)) {
+                    res.add(lpo);
                 }
             }
         }
@@ -24,69 +24,65 @@ public class QueryEntry {
     }
 
     public static List<Integer> orQuery(List<Integer> lpos, List<Integer> rpos) {
-        List<Integer> res = new ArrayList<>();
-
         Set<Integer> lset = new HashSet<>(lpos);
         Set<Integer> rset = new HashSet<>(rpos);
         lset.addAll(rset);
 
-        res.addAll(lset);
-        return res;
+        return new ArrayList<>(lset);
     }
 
     public static List<Integer> notQuery(List<Integer> lpos, List<Integer> rpos) {
-        List<Integer> res = new ArrayList<>();
-        res.addAll(lpos);
-        for (int i = 0; i < lpos.size(); ++i) {
-            for (int j = 0; j < rpos.size(); ++j) {
-                if (lpos.get(i).equals(rpos.get(j))) {
-                    res.remove(lpos.get(i));
+        List<Integer> res = new ArrayList<>(lpos);
+        for (Integer lpo : lpos) {
+            for (Integer rpo : rpos) {
+                if (lpo.equals(rpo)) {
+                    res.remove(lpo);
                 }
             }
         }
         return res;
     }
 
-    public static LinkedHashMap phraseQuery(LinkedHashMap<Integer, ArrayList<Integer>> leftWord,
-                                            LinkedHashMap<Integer, ArrayList<Integer>> rightWord) {
-        LinkedHashMap<Integer, ArrayList<Integer>> res = new LinkedHashMap<>();
+    public static Map<Integer, ArrayList<Integer>> phraseQuery(LinkedHashMap<Integer, ArrayList<Integer>> leftWord,
+                                                                         LinkedHashMap<Integer, ArrayList<Integer>> rightWord) {
+        Map<Integer, ArrayList<Integer>> res = new LinkedHashMap<>();
 
+/// TODO: delete code of no use.
 //        if(leftWord.size() < rightWord.size()){
 //
 //        }
         // key : doc Id
         // value : positions
-        for (Map.Entry entry : leftWord.entrySet()) {
+        for (Map.Entry<Integer, ArrayList<Integer>> entry : leftWord.entrySet()) {
             if (rightWord.containsKey(entry.getKey())) {
 
-                ArrayList<Integer> lpos = (ArrayList<Integer>) entry.getValue();
-                ArrayList<Integer> rpos = rightWord.get(entry.getKey());
+                List<Integer> lpos = entry.getValue();
+                List<Integer> rpos = rightWord.get(entry.getKey());
 
                 ArrayList<Integer> docPos = new ArrayList<>();
-                for (int i = 0; i < lpos.size(); ++i) {
-                    for (int j = 0; j < rpos.size(); ++j) {
-                        if (lpos.get(i).equals(rpos.get(j) - 1)) {
-                            docPos.add(lpos.get(i));
+                for (Integer lpo : lpos) {
+                    for (Integer rpo : rpos) {
+                        if (lpo.equals(rpo - 1)) {
+                            docPos.add(lpo);
                         }
                     }
                 }
                 if (docPos.size() != 0) {
-                    res.put((Integer) entry.getKey(), docPos);
+                    res.put(entry.getKey(), docPos);
                 }
             }
         }
         return res;
     }
 
-    public static ArrayList<Integer> getDocIds(LinkedHashMap<Integer, ArrayList<Integer>> t) {
-        ArrayList<Integer> res = new ArrayList<Integer>();
+    public static List<Integer> getDocIds(List<PairOfDocIdAndPositions> t) {
+        List<Integer> docIds = new ArrayList<>();
         if (t != null) {
-            for (Map.Entry entry : t.entrySet()) {
-                Integer docId = (Integer) entry.getKey();
-                res.add(docId);
+            for (PairOfDocIdAndPositions pair : t) {
+                docIds.add(pair.getDocId());
             }
         }
-        return res;
+        return docIds;
     }
 
     public static void main(String[] args) {

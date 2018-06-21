@@ -12,7 +12,7 @@ public class QueryParser {
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        String str = "(Brutus OR Caesar) AND NOT (Antony OR Cleopatra)";
+        String str = "NOT materials";
         List<String> list = parseBoolean(str);
         List<Integer> res = queryBoolean(parseBoolean(str));
         System.out.println("Found in docs: " + res);
