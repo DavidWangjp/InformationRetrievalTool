@@ -55,7 +55,7 @@ class InvertedIndex
 
     static void init()
     {
-        System.out.println("Initializing...");
+        System.out.print("Initializing the inverted index...");
         File dir = new File(path);
 
         String[] files = dir.list();
@@ -99,7 +99,7 @@ class InvertedIndex
                 e1.printStackTrace();
             }
         }
-        System.out.println("Finish in " + (System.currentTimeMillis() - startTime) + "ms");
+        System.out.println("finished in " + (System.currentTimeMillis() - startTime) + "ms");
     }
 
     private static void build()

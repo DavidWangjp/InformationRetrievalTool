@@ -27,13 +27,13 @@ N的值可以在correct方法中设置。
 
 ## QueryEntry
 
-主要是实现布尔查询（andQuery 、 orQuery 、notQuery）和短语查询(phraseQuery)
+主要是实现布尔查询（andOperate 、 orOperate 、notOperate）和短语查询(phraseQuery)
 
 其中三个布尔查询接受的参数为左右边词项出现的docId集合
 
 返回值值为其交/并/否的集合。
 
-短语查询传入 RetrievalUtil.retrieveWord()返回的对象。
+短语查询传入 Query.retrieveWord()返回的对象。
 
 getDocIds为获得docId的辅助函数。
 
