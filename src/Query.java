@@ -19,6 +19,7 @@ public class Query {
     }
 
     public static void main(String[] args) {
+        initInvertedIndex();
         while (true) {
             queryUserInterface();
         }
@@ -51,6 +52,8 @@ public class Query {
             default:
                 System.out.println("Invalid mode");
         }
+
+        System.out.println("");
     }
 
     public static void queryWordTopK(String token, int k) {
@@ -88,18 +91,18 @@ public class Query {
                 // Add to the heap.
                 resultMaxHeap.add(new DocIdScorePositionsEntry(docId, score, positions));
             }
+        }
 
-            // Print the result.
-            System.out.println("Result:");
-            for (int i = 0; i < k && i < resultMaxHeap.size(); i++) {
-                DocIdScorePositionsEntry resultEntry = resultMaxHeap.poll();
-                assert resultEntry != null;
+        // Print the result.
+        System.out.println("Result:");
+        for (int i = 0; i < k && resultMaxHeap.peek() != null; i++) {
+            DocIdScorePositionsEntry resultEntry = resultMaxHeap.poll();
+            assert resultEntry != null;
 
-                System.out.format("  DocId: %5d, Score: %6.2f, Positions: %s\n",
-                        resultEntry.getDocId(),
-                        resultEntry.getScore(),
-                        resultEntry.getPositions());
-            }
+            System.out.format("  DocId: %5d, Score: %6.2f, Positions: %s\n",
+                    resultEntry.getDocId(),
+                    resultEntry.getScore(),
+                    resultEntry.getPositions());
         }
     }
 
@@ -116,14 +119,15 @@ public class Query {
 
         // Return null in case of stop words.
         if (leftTerm == null && rightTerm == null) {
-            System.out.println("Please make your query more specific");
+            System.out.format("'%s' and '%s' are both omitted, please make your query more specific\n",
+                    leftToken, rightToken);
             return;
         } else if (leftTerm == null) {
-            System.out.format("%s is omitted", leftToken);
+            System.out.format("'%s' is omitted\n", leftToken);
             queryWordTopK(rightTerm, K);
             return;
         } else if (rightTerm == null) {
-            System.out.format("%s is omitted", rightToken);
+            System.out.format("'%s' is omitted\n", rightToken);
             queryWordTopK(leftTerm, K);
             return;
         }
@@ -173,18 +177,18 @@ public class Query {
                 // Add to the heap.
                 resultMaxHeap.add(new DocIdScorePositionsEntry(docId, score, positions));
             }
+        }
 
-            // Print the result.
-            System.out.println("Result:");
-            for (int i = 0; i < k && i < resultMaxHeap.size(); i++) {
-                DocIdScorePositionsEntry resultEntry = resultMaxHeap.poll();
-                assert resultEntry != null;
+        // Print the result.
+        System.out.println("Result:");
+        for (int i = 0; i < k && resultMaxHeap.peek() != null; i++) {
+            DocIdScorePositionsEntry resultEntry = resultMaxHeap.poll();
+            assert resultEntry != null;
 
-                System.out.format("  DocId: %5d, Score: %6.2f, Positions: %s\n",
-                        resultEntry.getDocId(),
-                        resultEntry.getScore(),
-                        resultEntry.getPositions());
-            }
+            System.out.format("  DocId: %5d, Score: %6.2f, Positions: %s\n",
+                    resultEntry.getDocId(),
+                    resultEntry.getScore(),
+                    resultEntry.getPositions());
         }
     }
 
@@ -209,7 +213,7 @@ public class Query {
 
         // Print the result.
         System.out.println("Result:");
-        for (int i = 0; i < k && i < resultMaxHeap.size(); i++) {
+        for (int i = 0; i < k && resultMaxHeap.peek() != null; i++) {
             DocIdScoreEntry resultEntry = resultMaxHeap.poll();
             assert resultEntry != null;
 
@@ -225,6 +229,7 @@ public class Query {
 
             // If the term is a stopping word, return a null list (not an empty one).
             if (term == null) {
+                System.out.format("'%s' is omitted\n", tokens.get(0));
                 return null;
             }
 
