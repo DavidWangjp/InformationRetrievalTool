@@ -4,17 +4,7 @@
 
 tokenDictionary是所有出现的单词词条化之后的词典，可能拼写校正要用到
 
-## RetriverlUtil类
-
-检索单个单词 retrieveWord(String query)，得到的结果存放在LinkedHashMap里  
-
-* 每个entry的key是docId，
-* 每个entry的value是单词在文档中出现的位置链表，用ArrayList<Integer>来表示
-* 检索得到的文档已经按照已排序
-  
-如果查询的单词是停用词，返回null
-
-##Correction类
+## Correction
 
 目前使用的方式如下，创建一个String数组
 String[] query = {"conclsion", "calenda", "ar", "true", "canlendae",  "ture"};
@@ -23,9 +13,7 @@ new irt.Correction().correct(query);
 单词纠正算法参考ppt上的Levenshtein距离算法，从Levenshtein为1 到 N逐增, 如果对应一个距离，词库里有合法的单词，选择tf最高的词项返回。
 N的值可以在correct方法中设置。
 
-
-
-## QueryEntry
+## QueryUtil
 
 主要是实现布尔查询（andOperate 、 orOperate 、notOperate）和短语查询(phraseQuery)
 
@@ -37,11 +25,52 @@ N的值可以在correct方法中设置。
 
 getDocIds为获得docId的辅助函数。
 
+## Query
 
+实现单词查询、双词短语查询和布尔查询，均为 TopK 查询。
 
-所以目前还没实现对输入的词法分析。。
+### 单词查询
 
-比如(Brutus OR Caesar) AND NOT (Antony OR Cleopatra)
+`void queryWordTopK(String token, int k)`
 
+#### 说明
 
+- 打印评分排名前 K 个文档的 DocId，Score 和 Postions。
+- 如果单词为停用词，将不进行查询，并提示 `"Please make your query more specific"`。
+- 如果单词在词典中不存在，会提示校正。接受校正将查询校正词，不接受将打印 `"No result"`。
+- 分数采用对于该词的 idf-tf 权重。
 
+### 双词短语查询
+
+`void queryPhraseTopK(String leftToken, String rightToken, Int k)`
+
+#### 说明
+
+- 打印评分排名前 K 个文档的 DocId，Score 和 Postions。
+- 如果有且仅有一个单词为停用词，会忽略该词，并提示 `"'xxx' is omitted\n"`。
+- 如果两个单词均为停用词，将不进行查询，并提示 `"Please make your query more specific"`。
+- 如果单词在词典中不存在，会提示校正。接受校正将使用校正词代替原词，不接受将打印 `"No result"`。
+- 分数采用对于该双词短语（作为整体）的 idf-tf 权重。
+
+### 布尔查询
+
+`void queryBooleanTopK(String query, int k)`
+
+#### 辅助函数
+
+- `List<Integer> queryBooleanAuxiliary(List<String> tokens, Map<Integer, Double> scores)`
+- `List<String> parseBoolean(String query)`
+
+#### 说明
+
+- 打印评分排名前 K 个文档的 DocId 和 Score。
+- 如果有停用词会忽略该词，并提示 `"'xxx' is omitted\n"`。
+- 如果所有单词都是停用词，会提示 `"Please make your query more 
+- 不进行单词校正。
+- 查询语句中 `NOT` 必须紧跟 `AND`，即以 `AND NOT` 的形式出现。
+- 没有对布尔查询进行优化，计算的顺序为小括号内优先，`NOT` > `AND` > `OR`，同优先级从左往右。
+- 分数采用对于查询语句中每一个词（除了紧跟 `NOT` 的那些）的 idf-tf 权重的累积。
+
+## 用户接口
+
+如题。

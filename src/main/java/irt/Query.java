@@ -23,6 +23,10 @@ public class Query {
     }
 
     public static void main(String[] args) {
+        queryUserInterface;
+    }
+
+    public static void queryUserInterface() {
         String documentCollectionDirectory;
 
         while (true) {
@@ -41,42 +45,42 @@ public class Query {
         while (true) {
             queryUserInterface();
         }
-    }
 
-    public static void queryUserInterface() {
-        System.out.println("[0] Quit");
-        System.out.println("[1] Word or phrase query");
-        System.out.println("[2] Boolean query");
-        System.out.print("Please enter your choice: ");
+        while (true) {
+            System.out.println("[0] Quit");
+            System.out.println("[1] Word or phrase query");
+            System.out.println("[2] Boolean query");
+            System.out.print("Please enter your choice: ");
 
-        int mode = scanner.nextInt();
-        scanner.nextLine();
+            int mode = scanner.nextInt();
+            scanner.nextLine();
 
-        if (mode == 0) {
-            System.out.println("Bye");
-            System.exit(0);
+            if (mode == 0) {
+                System.out.println("Bye");
+                System.exit(0);
+            }
+
+            System.out.print("Please enter your query in a line: ");
+            String query = scanner.nextLine();
+
+            switch (mode) {
+                case 1:
+                    String[] splitTokens = query.split("\\s+");
+                    if (splitTokens.length == 1) {
+                        queryWordTopK(splitTokens[0], K);
+                    } else if (splitTokens.length == 2) {
+                        queryPhraseTopK(splitTokens[0], splitTokens[1], K);
+                    }
+                    break;
+                case 2:
+                    queryBooleanTopK(query, K);
+                    break;
+                default:
+                    System.out.println("Invalid mode");
+            }
+
+            System.out.println("");
         }
-
-        System.out.print("Please enter your query in a line: ");
-        String query = scanner.nextLine();
-
-        switch (mode) {
-            case 1:
-                String[] splitTokens = query.split("\\s+");
-                if (splitTokens.length == 1) {
-                    queryWordTopK(splitTokens[0], K);
-                } else if (splitTokens.length == 2) {
-                    queryPhraseTopK(splitTokens[0], splitTokens[1], K);
-                }
-                break;
-            case 2:
-                queryBooleanTopK(query, K);
-                break;
-            default:
-                System.out.println("Invalid mode");
-        }
-
-        System.out.println("");
     }
 
     public static void queryWordTopK(String token, int k) {
