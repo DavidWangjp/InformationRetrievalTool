@@ -77,7 +77,7 @@ fabric.properties
 hs_err_pid*
 
 # Index files
-src/DocLen
-src/InvertedIndex
-src/TermDictionary
-src/TokenDictionary
+GeneratedIndexFiles/
+
+# Retuters document collection
+Reuters/

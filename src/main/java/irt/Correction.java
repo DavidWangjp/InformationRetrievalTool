@@ -1,3 +1,5 @@
+package irt;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.ObjectInputStream;
@@ -24,7 +26,7 @@ public class Correction {
 
     public Correction() {
         try {
-            File termDictionaryFile = new File(InvertedIndex.classPath + "/TermDictionary");
+            File termDictionaryFile = new File(InvertedIndex.indexGenerationDirectory + "/TermDictionary");
             ObjectInputStream termDictionaryInputStream = new ObjectInputStream(new FileInputStream(termDictionaryFile));
             InvertedIndex.termDictionary = (HashMap<String, Integer>) termDictionaryInputStream.readObject();
 
@@ -139,7 +141,7 @@ public class Correction {
     /**
      * 英文词纠正
      * 纠正数：1
-     * new Correction(String word).correct()
+     * new irt.Correction(String word).correct()
      *
      * @param wd
      * @return

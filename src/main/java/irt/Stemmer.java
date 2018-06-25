@@ -1,4 +1,4 @@
-
+package irt;
 /*
 
    Porter stemmer in Java. The original paper is in
@@ -34,9 +34,9 @@
 */
 
 /**
- * Stemmer, implementing the Porter Stemming Algorithm
+ * irt.Stemmer, implementing the Porter Stemming Algorithm
  * <p>
- * The Stemmer class transforms a word into its root form.  The input
+ * The irt.Stemmer class transforms a word into its root form.  The input
  * word can be provided a character at time (by calling add()), or at once
  * by calling one of the various stem(something) methods.
  */
@@ -560,7 +560,7 @@ class Stemmer
     }
 
     /**
-     * Stem the word placed into the Stemmer buffer through calls to add().
+     * Stem the word placed into the irt.Stemmer buffer through calls to add().
      * Returns true if the stemming process resulted in a word different
      * from the input.  You can retrieve the result with
      * getResultLength()/getResultBuffer() or toString().

@@ -1,9 +1,11 @@
+package irt;
+
 import java.io.*;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.*;
 
-import static java.lang.Math.log10;
-import static java.lang.Math.pow;
-import static java.lang.Math.sqrt;
+import static java.lang.Math.*;
 
 class InvertedIndex {
     private static final HashSet<Character> Punctuations = new HashSet<Character>() {{
@@ -16,7 +18,7 @@ class InvertedIndex {
         add('\'');
     }};
 
-    static final String classPath = InvertedIndex.class.getClassLoader().getResource("").getPath();
+    static final String indexGenerationDirectory = "./GeneratedIndexFiles";
 
     // stores all tokens
     static HashSet<String> tokenDictionary = new HashSet<>();
@@ -32,7 +34,6 @@ class InvertedIndex {
 
     private static Stemmer stemmer = new Stemmer();
     static int FILE_SIZE;
-
 
     /**
      * convert word to term, return null if stopword
@@ -50,17 +51,19 @@ class InvertedIndex {
 
     }
 
-    static void init() {
+    static void init(String documentCollectionDirectory) {
         System.out.print("Initializing the inverted index...");
-        File dir = new File(classPath);
+        File dir = new File(indexGenerationDirectory);
+        dir.mkdir();
+
         String[] files = dir.list();
         FILE_SIZE = files.length;
 
         long startTime = System.currentTimeMillis();
-        File invertedIndexFile = new File(classPath + "/InvertedIndex");
-        File tokenDictionaryFile = new File(classPath + "/TokenDictionary");
-        File termDictionaryFile = new File(classPath + "/TermDictionary");
-        File docLenFile = new File(classPath + "/DocLen");
+        File invertedIndexFile = new File(indexGenerationDirectory + "/InvertedIndex");
+        File tokenDictionaryFile = new File(indexGenerationDirectory + "/TokenDictionary");
+        File termDictionaryFile = new File(indexGenerationDirectory + "/TermDictionary");
+        File docLenFile = new File(indexGenerationDirectory + "/DocLen");
 
         try {
             ObjectInputStream invertedIndexInputStream = new ObjectInputStream(new FileInputStream(invertedIndexFile));
@@ -73,7 +76,7 @@ class InvertedIndex {
             termDictionary = (HashMap<String, Integer>) termDictionaryInputStream.readObject();
             docLen = (HashMap<Integer, Double>) docLenInputStream.readObject();
         } catch (IOException | ClassNotFoundException e) {
-            build();
+            build(documentCollectionDirectory);
             try {
                 ObjectOutputStream invertedIndexOutputStream = new ObjectOutputStream(new FileOutputStream(invertedIndexFile));
                 ObjectOutputStream tokenDictionaryOutputStream = new ObjectOutputStream(new FileOutputStream(tokenDictionaryFile));
@@ -91,15 +94,15 @@ class InvertedIndex {
         System.out.println("finished in " + (System.currentTimeMillis() - startTime) + "ms");
     }
 
-    private static void build() {
-        File dir = new File(classPath + "/Reuters");
+    private static void build(String documentCollectionDirectory) {
+        File dir = new File(documentCollectionDirectory);
+        assert dir.isDirectory();
 
         String[] files = dir.list();
 
         assert files != null;
         for (String file : files) {
             if (!file.endsWith(".html")) {
-                //skip .DS_Store
                 continue;
             }
             int docId = Integer.parseInt(file.split("\\.")[0]);

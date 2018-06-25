@@ -1,3 +1,6 @@
+package irt;
+
+import java.io.File;
 import java.util.*;
 
 import static java.lang.Math.log10;
@@ -20,7 +23,21 @@ public class Query {
     }
 
     public static void main(String[] args) {
-        initInvertedIndex();
+        String documentCollectionDirectory;
+
+        while (true) {
+            System.out.print("Please input the directory of the document collection in a line: ");
+            documentCollectionDirectory = scanner.nextLine();
+            File file = new File(documentCollectionDirectory);
+            if (!file.isDirectory()) {
+                System.out.println("The directory doesn't exist");
+            } else {
+                break;
+            }
+        }
+
+        initInvertedIndex(documentCollectionDirectory);
+
         while (true) {
             queryUserInterface();
         }
@@ -63,7 +80,7 @@ public class Query {
     }
 
     public static void queryWordTopK(String token, int k) {
-        initInvertedIndex();
+        assert initialized;
 
         PriorityQueue<DocIdScorePositionsEntry> resultMaxHeap = new PriorityQueue<>((o1, o2) ->
                 Double.compare(o2.getScore(), o1.getScore()));
@@ -123,8 +140,6 @@ public class Query {
     }
 
     public static void queryPhraseTopK(String leftToken, String rightToken, int k) {
-        initInvertedIndex();
-
         Map<Integer, List<Integer>> phrasePostings = new HashMap<>();
 
         PriorityQueue<DocIdScorePositionsEntry> resultMaxHeap = new PriorityQueue<>((o1, o2) ->
@@ -232,7 +247,8 @@ public class Query {
     }
 
     public static void queryBooleanTopK(String query, int k) {
-        initInvertedIndex();
+        assert initialized;
+
         List<String> tokens = parseBoolean(query);
         final Map<Integer, Double> scores = new HashMap<>();
 
@@ -432,9 +448,9 @@ public class Query {
         }
     }
 
-    private static void initInvertedIndex() {
+    private static void initInvertedIndex(String documentCollectionDirectory) {
         if (!initialized) {
-            InvertedIndex.init();
+            InvertedIndex.init(documentCollectionDirectory);
             initialized = true;
         }
     }

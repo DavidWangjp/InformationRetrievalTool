@@ -19,7 +19,7 @@ tokenDictionary是所有出现的单词词条化之后的词典，可能拼写�
 目前使用的方式如下，创建一个String数组
 String[] query = {"conclsion", "calenda", "ar", "true", "canlendae",  "ture"};
 然后新建一个Correction类调用correct方法就可以得到纠正后的结果：
-new Correction().correct(query);
+new irt.Correction().correct(query);
 单词纠正算法参考ppt上的Levenshtein距离算法，从Levenshtein为1 到 N逐增, 如果对应一个距离，词库里有合法的单词，选择tf最高的词项返回。
 N的值可以在correct方法中设置。
 
@@ -33,7 +33,7 @@ N的值可以在correct方法中设置。
 
 返回值值为其交/并/否的集合。
 
-短语查询传入 Query.retrieveWord()返回的对象。
+短语查询传入 irt.Query.retrieveWord()返回的对象。
 
 getDocIds为获得docId的辅助函数。
 

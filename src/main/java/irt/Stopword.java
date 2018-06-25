@@ -1,3 +1,5 @@
+package irt;
+
 import java.util.HashSet;
 
 public class Stopword
