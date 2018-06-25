@@ -24,7 +24,7 @@ public class Correction {
 
     public Correction() {
         try {
-            File termDictionaryFile = new File(InvertedIndex.path + "/TermDictionary");
+            File termDictionaryFile = new File(InvertedIndex.classPath + "/TermDictionary");
             ObjectInputStream termDictionaryInputStream = new ObjectInputStream(new FileInputStream(termDictionaryFile));
             InvertedIndex.termDictionary = (HashMap<String, Integer>) termDictionaryInputStream.readObject();
 

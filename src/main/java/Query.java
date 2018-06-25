@@ -34,13 +34,16 @@ public class Query {
 
         int mode = scanner.nextInt();
         scanner.nextLine();
+
+        if (mode == 0) {
+            System.out.println("Bye");
+            System.exit(0);
+        }
+
         System.out.print("Please enter your query in a line: ");
         String query = scanner.nextLine();
 
         switch (mode) {
-            case 0:
-                System.exit(0);
-                break;
             case 1:
                 String[] splitTokens = query.split("\\s+");
                 if (splitTokens.length == 1) {
