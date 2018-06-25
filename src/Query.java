@@ -13,7 +13,7 @@ public class Query {
     public static final String RIGHT_PAR = ")";
 
     private static boolean initialized = false;
-    private final static int K = 100;
+    private final static int K = 10;
     private final static Scanner scanner = new Scanner(System.in);
 
     public Query() {
@@ -27,9 +27,10 @@ public class Query {
     }
 
     public static void queryUserInterface() {
+        System.out.println("[0] Quit");
         System.out.println("[1] Word or phrase query");
         System.out.println("[2] Boolean query");
-        System.out.print("Please choose a query mode: ");
+        System.out.print("Please enter your choice: ");
 
         int mode = scanner.nextInt();
         scanner.nextLine();
@@ -37,6 +38,9 @@ public class Query {
         String query = scanner.nextLine();
 
         switch (mode) {
+            case 0:
+                System.exit(0);
+                break;
             case 1:
                 String[] splitTokens = query.split("\\s+");
                 if (splitTokens.length == 1) {

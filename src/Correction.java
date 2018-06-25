@@ -180,17 +180,6 @@ public class Correction {
         }
         return hascorrect;
     }
-
-    public static void main(String[] args) {
-//        String[] query = {"conclsion", "calenda", "ar", "true", "canlendae",  "ture"};
-        String[] query = {"true"};
-        System.out.println("whether successful: " + new Correction().correct(query));
-        long st = System.currentTimeMillis();
-        for (int i = 0; i < query.length; i++) {
-            System.out.println(query[i]);
-        }
-//        System.out.println((System.currentTimeMillis() - st)/ 1000.0 + "s");
-    }
 }
 
 
