@@ -23,7 +23,7 @@ public class Query {
     }
 
     public static void main(String[] args) {
-        queryUserInterface;
+        queryUserInterface();
     }
 
     public static void queryUserInterface() {
@@ -41,10 +41,6 @@ public class Query {
         }
 
         initInvertedIndex(documentCollectionDirectory);
-
-        while (true) {
-            queryUserInterface();
-        }
 
         while (true) {
             System.out.println("[0] Quit");
