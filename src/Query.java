@@ -14,6 +14,7 @@ public class Query {
 
     private static boolean initialized = false;
     private final static int K = 100;
+    private final static Scanner scanner = new Scanner(System.in);
 
     public Query() {
     }
@@ -26,8 +27,6 @@ public class Query {
     }
 
     public static void queryUserInterface() {
-        Scanner scanner = new Scanner(System.in);
-
         System.out.println("[1] Word or phrase query");
         System.out.println("[2] Boolean query");
         System.out.print("Please choose a query mode: ");
@@ -70,28 +69,38 @@ public class Query {
             return;
         }
 
-        // TODO: term correction.
-
-        if (InvertedIndex.termDictionary.containsKey(term) && InvertedIndex.invertedIndex.containsKey(term)) {
-            // Compute idf of the term.
-            double idf = log10(1.0 * InvertedIndex.FILE_SIZE / InvertedIndex.termDictionary.get(term));
-
-            // Get the posting list.
-            Map<Integer, ArrayList<Integer>> postings = InvertedIndex.invertedIndex.get(term);
-
-            // Compute the score of each document.
-            for (Map.Entry<Integer, ArrayList<Integer>> posting : postings.entrySet()) {
-                Integer docId = posting.getKey();
-                List<Integer> positions = posting.getValue();
-
-                // Compute tf-idf.
-                double score = idf * (1.0 + log10(positions.size()));
-                score /= InvertedIndex.docLen.get(docId);
-
-                // Add to the heap.
-                resultMaxHeap.add(new DocIdScorePositionsEntry(docId, score, positions));
+        // Term correction.
+        if (!InvertedIndex.termDictionary.containsKey(term) || !InvertedIndex.invertedIndex.containsKey(term)) {
+            String correctedTerm = tryCorrectTerm(term);
+            if (correctedTerm == null) {
+                return;
+            } else {
+                term = correctedTerm;
             }
         }
+
+        assert InvertedIndex.termDictionary.containsKey(term);
+        assert InvertedIndex.invertedIndex.containsKey(term);
+
+        // Compute idf of the term.
+        double idf = log10(1.0 * InvertedIndex.FILE_SIZE / InvertedIndex.termDictionary.get(term));
+
+        // Get the posting list.
+        Map<Integer, ArrayList<Integer>> postings = InvertedIndex.invertedIndex.get(term);
+
+        // Compute the score of each document.
+        for (Map.Entry<Integer, ArrayList<Integer>> posting : postings.entrySet()) {
+            Integer docId = posting.getKey();
+            List<Integer> positions = posting.getValue();
+
+            // Compute tf-idf.
+            double score = idf * (1.0 + log10(positions.size()));
+            score /= InvertedIndex.docLen.get(docId);
+
+            // Add to the heap.
+            resultMaxHeap.add(new DocIdScorePositionsEntry(docId, score, positions));
+        }
+
 
         // Print the result.
         System.out.println("Result:");
@@ -132,7 +141,30 @@ public class Query {
             return;
         }
 
-        // TODO: term correction.
+        // Term correction.
+        if (!InvertedIndex.termDictionary.containsKey(leftTerm) || !InvertedIndex.invertedIndex.containsKey(leftTerm)) {
+            String correctedTerm = tryCorrectTerm(leftTerm);
+            if (correctedTerm == null) {
+                System.out.println("No result");
+                return;
+            } else {
+                leftTerm = correctedTerm;
+            }
+        }
+
+        if (!InvertedIndex.termDictionary.containsKey(rightTerm) || !InvertedIndex.invertedIndex.containsKey
+                (rightTerm)) {
+            String correctedTerm = tryCorrectTerm(rightTerm);
+            if (correctedTerm == null) {
+                System.out.println("No result");
+                return;
+            } else {
+                rightTerm = correctedTerm;
+            }
+        }
+
+        assert InvertedIndex.termDictionary.containsKey(leftTerm);
+        assert InvertedIndex.invertedIndex.containsKey(rightTerm);
 
         if (InvertedIndex.termDictionary.containsKey(leftTerm) && InvertedIndex.invertedIndex.containsKey(leftTerm)
                 && InvertedIndex.termDictionary.containsKey(rightTerm)
@@ -404,6 +436,31 @@ public class Query {
         final List<Integer> docIds = new ArrayList<>();
         postings.forEach((key, value) -> docIds.add(key));
         return docIds;
+    }
+
+    /**
+     * @param term the term to be corrected.
+     * @return the corrected term if there is, otherwise {@code null}.
+     */
+    private static String tryCorrectTerm(String term) {
+        assert term != null;
+        Correction correction = new Correction();
+        String res = correction.correct(term);
+
+        if (res.equals(term)) {
+            return null;
+        } else {
+            System.out.format("There is no such word as '%s', do you mean '%s'?\n", term, res);
+            while (true) {
+                System.out.print("[y/n]: ");
+                String answer = scanner.nextLine();
+                if (answer.equals("y") || answer.equals("Y")) {
+                    return res;
+                } else if (answer.equals("n") || answer.equals("N")) {
+                    return null;
+                }
+            }
+        }
     }
 }
 
