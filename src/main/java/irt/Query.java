@@ -1,5 +1,7 @@
 package irt;
 
+import com.sun.istack.internal.NotNull;
+
 import java.io.File;
 import java.util.*;
 
@@ -61,11 +63,11 @@ public class Query {
 
             switch (mode) {
                 case 1:
-                    String[] splitTokens = query.split("\\s+");
-                    if (splitTokens.length == 1) {
-                        queryWordTopK(splitTokens[0], K);
-                    } else if (splitTokens.length == 2) {
-                        queryPhraseTopK(splitTokens[0], splitTokens[1], K);
+                    List<String> splitTokens = Arrays.asList(query.split("\\s+"));
+                    if (splitTokens.size() == 1) {
+                        queryWordTopK(splitTokens.get(0), K);
+                    } else if (splitTokens.size() > 1) {
+                        queryPhraseTopK(splitTokens, K);
                     }
                     break;
                 case 2:
@@ -139,110 +141,61 @@ public class Query {
         }
     }
 
-    public static void queryPhraseTopK(String leftToken, String rightToken, int k) {
-        Map<Integer, List<Integer>> phrasePostings = new HashMap<>();
-
-        PriorityQueue<DocIdScorePositionsEntry> resultMaxHeap = new PriorityQueue<>((o1, o2) ->
-                Double.compare(o2.getScore(), o1.getScore()));
-
-        String leftTerm = InvertedIndex.getTerm(leftToken);
-        String rightTerm = InvertedIndex.getTerm(rightToken);
-
-        // Return null in case of stop words.
-        if (leftTerm == null && rightTerm == null) {
-            System.out.format("'%s' and '%s' are both omitted, please make your query more specific\n",
-                    leftToken, rightToken);
-            return;
-        } else if (leftTerm == null) {
-            System.out.format("'%s' is omitted\n", leftToken);
-            queryWordTopK(rightTerm, K);
-            return;
-        } else if (rightTerm == null) {
-            System.out.format("'%s' is omitted\n", rightToken);
-            queryWordTopK(leftTerm, K);
-            return;
+    public static void queryPhraseTopK(List<String> tokens, int k) {
+        List<String> terms = new ArrayList<>();
+        for (String token : tokens) {
+            String term = InvertedIndex.getTerm(token);
+            if (term == null) {
+                System.out.format("'%s' is omitted\n", token);
+            } else {
+                terms.add(term);
+            }
         }
 
         // Term correction.
-        if (!InvertedIndex.termDictionary.containsKey(leftTerm) || !InvertedIndex.invertedIndex.containsKey(leftTerm)) {
-            String correctedTerm = tryCorrectTerm(leftTerm);
-            if (correctedTerm == null) {
-                System.out.println("No result");
-                return;
-            } else {
-                leftTerm = correctedTerm;
-            }
-        }
-
-        if (!InvertedIndex.termDictionary.containsKey(rightTerm) || !InvertedIndex.invertedIndex.containsKey
-                (rightTerm)) {
-            String correctedTerm = tryCorrectTerm(rightTerm);
-            if (correctedTerm == null) {
-                System.out.println("No result");
-                return;
-            } else {
-                rightTerm = correctedTerm;
-            }
-        }
-
-        assert InvertedIndex.termDictionary.containsKey(leftTerm);
-        assert InvertedIndex.invertedIndex.containsKey(rightTerm);
-
-        if (InvertedIndex.termDictionary.containsKey(leftTerm) && InvertedIndex.invertedIndex.containsKey(leftTerm)
-                && InvertedIndex.termDictionary.containsKey(rightTerm)
-                && InvertedIndex.invertedIndex.containsKey(rightTerm)) {
-            // Get posting lists of both terms.
-            Map<Integer, ArrayList<Integer>> leftPostings = InvertedIndex.invertedIndex.get(leftTerm);
-            Map<Integer, ArrayList<Integer>> rightPostings = InvertedIndex.invertedIndex.get(rightTerm);
-
-            // Build the posting list of the phrase.
-            for (Map.Entry<Integer, ArrayList<Integer>> leftPosting : leftPostings.entrySet()) {
-                if (rightPostings.containsKey(leftPosting.getKey())) {
-                    List<Integer> leftPositions = leftPosting.getValue();
-                    List<Integer> rightPositions = rightPostings.get(leftPosting.getKey());
-
-                    List<Integer> positions = new ArrayList<>();
-                    for (Integer leftPosition : leftPositions) {
-                        for (Integer rightPosition : rightPositions) {
-                            if (leftPosition.equals(rightPosition - 1)) {
-                                positions.add(leftPosition);
-                            }
-                        }
-                    }
-
-                    if (positions.size() != 0) {
-                        phrasePostings.put(leftPosting.getKey(), positions);
-                    }
+        for (String term : terms) {
+            if (!InvertedIndex.termDictionary.containsKey(term) || !InvertedIndex.invertedIndex.containsKey(term)) {
+                String correctedTerm = tryCorrectTerm(term);
+                if (correctedTerm == null) {
+                    System.out.println("No result");
+                    return;
+                } else {
+                    term = correctedTerm;
                 }
             }
+        }
 
-            // Compute the score of each document.
-            for (Map.Entry<Integer, List<Integer>> posting : phrasePostings.entrySet()) {
-                // Compute idf.
-                double idf = log10(1.0 * InvertedIndex.FILE_SIZE / phrasePostings.size());
+        List<Integer> phraseDocIDs = new ArrayList<>();
+        Map<Integer, Double> scores = new HashMap<>();
 
-                Integer docId = posting.getKey();
-                List<Integer> positions = posting.getValue();
+        for (int i = 0; i < terms.size() - 1; ++i) {
+            List<Integer> docIds = getDocIdsOfPostings(queryDoubleWordPhrase(terms.get(i), terms.get(i + 1), scores));
 
-                // Compute tf-idf.
-                double score = idf * (1.0 + log10(positions.size()));
-                score /= InvertedIndex.docLen.get(docId);
-
-                // Add to the heap.
-                resultMaxHeap.add(new DocIdScorePositionsEntry(docId, score, positions));
+            if (i == 0) {
+                phraseDocIDs = docIds;
+            } else {
+                phraseDocIDs = QueryUtil.andOperate(phraseDocIDs, docIds);
             }
         }
+
+        // Top K.
+        PriorityQueue<DocIdScoreEntry> resultMaxHeap = new PriorityQueue<>((o1, o2) ->
+                Double.compare(o2.getScore(), o1.getScore()));
+        phraseDocIDs.forEach(docId -> {
+            // Score normalization.
+            double score = scores.get(docId) / InvertedIndex.docLen.get(docId);
+            resultMaxHeap.add(new DocIdScoreEntry(docId, score));
+        });
 
         // Print the result.
         System.out.println("Result:");
         for (int i = 0; i < k && resultMaxHeap.peek() != null; i++) {
-            DocIdScorePositionsEntry resultEntry = resultMaxHeap.poll();
+            DocIdScoreEntry resultEntry = resultMaxHeap.poll();
             assert resultEntry != null;
 
-            System.out.format("  DocId: %5d, Score: %6.2f, Positions: %s\n",
+            System.out.format("  DocId: %5d, Score: %6.2f\n",
                     resultEntry.getDocId(),
-                    resultEntry.getScore(),
-                    resultEntry.getPositions());
+                    resultEntry.getScore());
         }
     }
 
@@ -258,11 +211,12 @@ public class Query {
             return;
         }
 
+        // Top K.
         final PriorityQueue<DocIdScoreEntry> resultMaxHeap = new PriorityQueue<>((o1, o2) ->
                 Double.compare(o2.getScore(), o1.getScore()));
         docIds.forEach(docId -> {
-            Double score = scores.get(docId);
-            assert score != null;
+            // Score normalization.
+            double score = scores.get(docId) / InvertedIndex.docLen.get(docId);
             resultMaxHeap.add(new DocIdScoreEntry(docId, score));
         });
 
@@ -484,6 +438,69 @@ public class Query {
                 }
             }
         }
+    }
+
+
+    /**
+     * @param leftTerm  the left term.
+     * @param rightTerm the right term.
+     * @return the the posting list of the double word phrase.
+     */
+    private static Map<Integer, ArrayList<Integer>> queryDoubleWordPhrase(@NotNull String leftTerm,
+                                                                          @NotNull String rightTerm,
+                                                                          Map<Integer, Double> scores) {
+        Map<Integer, ArrayList<Integer>> phrasePostings = new HashMap<>();
+
+        assert InvertedIndex.termDictionary.containsKey(leftTerm);
+        assert InvertedIndex.invertedIndex.containsKey(leftTerm);
+        assert InvertedIndex.termDictionary.containsKey(rightTerm);
+        assert InvertedIndex.invertedIndex.containsKey(rightTerm);
+
+        // Get posting lists of both terms.
+        Map<Integer, ArrayList<Integer>> leftPostings = InvertedIndex.invertedIndex.get(leftTerm);
+        Map<Integer, ArrayList<Integer>> rightPostings = InvertedIndex.invertedIndex.get(rightTerm);
+
+        // Build the posting list of the phrase.
+        for (Map.Entry<Integer, ArrayList<Integer>> leftPosting : leftPostings.entrySet()) {
+            if (rightPostings.containsKey(leftPosting.getKey())) {
+                List<Integer> leftPositions = leftPosting.getValue();
+                List<Integer> rightPositions = rightPostings.get(leftPosting.getKey());
+
+                ArrayList<Integer> positions = new ArrayList<>();
+                for (Integer leftPosition : leftPositions) {
+                    for (Integer rightPosition : rightPositions) {
+                        if (leftPosition.equals(rightPosition - 1)) {
+                            positions.add(leftPosition);
+                        }
+                    }
+                }
+
+                if (positions.size() != 0) {
+                    phrasePostings.put(leftPosting.getKey(), positions);
+                }
+            }
+        }
+
+        // Compute the score of each document.
+        for (Map.Entry<Integer, ArrayList<Integer>> posting : phrasePostings.entrySet()) {
+            // Compute idf.
+            double idf = log10(1.0 * InvertedIndex.FILE_SIZE / phrasePostings.size());
+
+            Integer docId = posting.getKey();
+            List<Integer> positions = posting.getValue();
+
+            // Compute tf-idf.
+            double score = idf * (1.0 + log10(positions.size()));
+
+            // Accumulate the score of each document.
+            if (!scores.containsKey(docId)) {
+                scores.put(docId, score);
+            } else {
+                scores.put(docId, scores.get(docId) + score);
+            }
+        }
+
+        return phrasePostings;
     }
 }
 
