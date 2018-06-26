@@ -31,7 +31,6 @@ class InvertedIndex {
     // doc length based on VSM
     // vector length
     static HashMap<Integer, Double> docLen = new HashMap<>();
-
     private static Stemmer stemmer = new Stemmer();
     static int FILE_SIZE;
 
@@ -53,11 +52,14 @@ class InvertedIndex {
 
     static void init(String documentCollectionDirectory) {
         System.out.print("Initializing the inverted index...");
+        File collectionDir = new File(documentCollectionDirectory);
+        collectionDir.mkdir();
+        FILE_SIZE = collectionDir.list().length;
+
         File dir = new File(indexGenerationDirectory);
         dir.mkdir();
 
         String[] files = dir.list();
-        FILE_SIZE = files.length;
 
         long startTime = System.currentTimeMillis();
         File invertedIndexFile = new File(indexGenerationDirectory + "/InvertedIndex");
@@ -201,5 +203,12 @@ class InvertedIndex {
         }
         return token;
     }
+
+    static int getDf(String term) {
+        if (!termDictionary.containsKey(term))
+            return 0;
+        else return invertedIndex.get(term).size();
+    }
+
 
 }
