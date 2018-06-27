@@ -190,19 +190,25 @@ class InvertedIndex {
      * @param token
      * @return
      */
-    private static String getToken(String token) {
-        while (Punctuations.contains(token.charAt(0))) {
+    private static String getToken(String token)
+    {
+        if (token.endsWith("'s"))
+            token = token.substring(0, token.length() - 2);
+        while (Punctuations.contains(token.charAt(0)))
+        {
             token = token.substring(1);
             if (token.isEmpty())
                 return null;
         }
-        while (Punctuations.contains(token.charAt(token.length() - 1))) {
+        while (Punctuations.contains(token.charAt(token.length() - 1)))
+        {
             token = token.substring(0, token.length() - 1);
             if (token.isEmpty())
                 return null;
         }
         return token;
     }
+
 
     static int getDf(String term) {
         if (!termDictionary.containsKey(term))

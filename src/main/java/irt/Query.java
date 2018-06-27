@@ -119,7 +119,7 @@ public class Query {
         for (Map.Entry<Integer, ArrayList<Integer>> posting : postings.entrySet()) {
             Integer docId = posting.getKey();
             List<Integer> positions = posting.getValue();
-    
+
             // Compute tf-idf.
             double score = idf * (1.0 + log10(positions.size()));
             score /= InvertedIndex.docLen.get(docId);
@@ -246,6 +246,7 @@ public class Query {
             // TODO: term correction.
 
             if (InvertedIndex.termDictionary.containsKey(term) && InvertedIndex.invertedIndex.containsKey(term)) {
+
                 int df = InvertedIndex.getDf(term);
                 double idf = log10(1.0 * InvertedIndex.FILE_SIZE / df);
 
