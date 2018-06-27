@@ -18,7 +18,7 @@ public class Query {
     public static final String RIGHT_PAR = ")";
 
     private static boolean initialized = false;
-    private final static int K = 10;
+    private final static int K = 1000;
     private final static Scanner scanner = new Scanner(System.in);
 
     public Query() {
@@ -246,8 +246,8 @@ public class Query {
             // TODO: term correction.
 
             if (InvertedIndex.termDictionary.containsKey(term) && InvertedIndex.invertedIndex.containsKey(term)) {
-                // Compute idf of the term.
-                double idf = log10(1.0 * InvertedIndex.FILE_SIZE / InvertedIndex.termDictionary.get(term));
+                int df = InvertedIndex.getDf(term);
+                double idf = log10(1.0 * InvertedIndex.FILE_SIZE / df);
 
                 // Get the posting list.
                 Map<Integer, ArrayList<Integer>> postings = InvertedIndex.invertedIndex.get(term);
