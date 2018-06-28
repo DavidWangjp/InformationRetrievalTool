@@ -9,6 +9,26 @@ import static java.lang.Math.*;
 
 class InvertedIndex {
     private static final HashSet<Character> Punctuations = new HashSet<Character>() {{
+        add('!');
+        add('@');
+        add('#');
+        add('$');
+        add('%');
+        add('^');
+        add('&');
+        add('*');
+        add('(');
+        add(')');
+        add('_');
+        add('+');
+        add('-');
+        add('=');
+
+        add('{');
+        add('}');
+        add('[');
+        add(']');
+
         add(';');
         add(',');
         add('.');
@@ -16,6 +36,10 @@ class InvertedIndex {
         add('-');
         add('\"');
         add('\'');
+        add('(');
+        add(')');
+        add('<');
+        add('>');
     }};
 
     static final String indexGenerationDirectory = "./GeneratedIndexFiles";
@@ -178,6 +202,8 @@ class InvertedIndex {
                 }
 
                 docLen.put(docId, sqrt(len));
+
+                reader.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }

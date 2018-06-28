@@ -131,7 +131,8 @@ public class Query {
 
         // Print the result.
         System.out.println("Result:");
-        for (int i = 0; i < k && resultMaxHeap.peek() != null; i++) {
+        int i = 0;
+        for (i = 0; i < k && resultMaxHeap.peek() != null; i++) {
             DocIdScorePositionsEntry resultEntry = resultMaxHeap.poll();
             assert resultEntry != null;
 
@@ -140,6 +141,7 @@ public class Query {
                     resultEntry.getScore(),
                     resultEntry.getPositions());
         }
+        System.out.format("  %d results in total\n", i);
     }
 
     public static void queryPhraseTopK(List<String> tokens, int k) {
@@ -190,7 +192,8 @@ public class Query {
 
         // Print the result.
         System.out.println("Result:");
-        for (int i = 0; i < k && resultMaxHeap.peek() != null; i++) {
+        int i = 0;
+        for (i = 0; i < k && resultMaxHeap.peek() != null; i++) {
             DocIdScoreEntry resultEntry = resultMaxHeap.poll();
             assert resultEntry != null;
 
@@ -198,6 +201,7 @@ public class Query {
                     resultEntry.getDocId(),
                     resultEntry.getScore());
         }
+        System.out.format("  %d results in total\n", i);
     }
 
     public static void queryBooleanTopK(String query, int k) {
@@ -223,7 +227,8 @@ public class Query {
 
         // Print the result.
         System.out.println("Result:");
-        for (int i = 0; i < k && resultMaxHeap.peek() != null; i++) {
+        int i = 0;
+        for (i = 0; i < k && resultMaxHeap.peek() != null; i++) {
             DocIdScoreEntry resultEntry = resultMaxHeap.poll();
             assert resultEntry != null;
 
@@ -231,6 +236,7 @@ public class Query {
                     resultEntry.getDocId(),
                     resultEntry.getScore());
         }
+        System.out.format("  %d results in total\n", i);
     }
 
     public static List<Integer> queryBooleanAuxiliary(List<String> tokens, Map<Integer, Double> scores) {
