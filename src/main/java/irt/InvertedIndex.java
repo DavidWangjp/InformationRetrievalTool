@@ -1,14 +1,14 @@
 package irt;
 
 import java.io.*;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.*;
 
 import static java.lang.Math.*;
 
-class InvertedIndex {
-    private static final HashSet<Character> Punctuations = new HashSet<Character>() {{
+class InvertedIndex
+{
+    private static final HashSet<Character> Punctuations = new HashSet<Character>()
+    {{
         add('!');
         add('@');
         add('#');
@@ -23,21 +23,15 @@ class InvertedIndex {
         add('+');
         add('-');
         add('=');
-
         add('{');
         add('}');
         add('[');
         add(']');
-
         add(';');
         add(',');
         add('.');
-        add('+');
-        add('-');
         add('\"');
         add('\'');
-        add('(');
-        add(')');
         add('<');
         add('>');
     }};
@@ -45,7 +39,7 @@ class InvertedIndex {
     static final String indexGenerationDirectory = "./GeneratedIndexFiles";
 
     // stores all tokens
-    static HashSet<String> tokenDictionary = new HashSet<>();
+    private static HashSet<String> tokenDictionary = new HashSet<>();
 
     // stores all terms and doc frequency
     static HashMap<String, Integer> termDictionary = new HashMap<>();
@@ -64,7 +58,8 @@ class InvertedIndex {
      * @param word
      * @return
      */
-    static String getTerm(String word) {
+    static String getTerm(String word)
+    {
         String token = getToken(word.trim().toLowerCase());
         if (token == null || Stopword.stopwrods.contains(token))
             return null;
@@ -74,11 +69,12 @@ class InvertedIndex {
 
     }
 
-    static void init(String documentCollectionDirectory) {
+    static void init(String documentCollectionDirectory)
+    {
         System.out.print("Initializing the inverted index...");
         File collectionDir = new File(documentCollectionDirectory);
         collectionDir.mkdir();
-        FILE_SIZE = collectionDir.list().length;
+        FILE_SIZE = Objects.requireNonNull(collectionDir.list()).length;
 
         File dir = new File(indexGenerationDirectory);
         dir.mkdir();
@@ -91,7 +87,8 @@ class InvertedIndex {
         File termDictionaryFile = new File(indexGenerationDirectory + "/TermDictionary");
         File docLenFile = new File(indexGenerationDirectory + "/DocLen");
 
-        try {
+        try
+        {
             ObjectInputStream invertedIndexInputStream = new ObjectInputStream(new FileInputStream(invertedIndexFile));
             ObjectInputStream tokenDictionaryInputStream = new ObjectInputStream(new FileInputStream(tokenDictionaryFile));
             ObjectInputStream termDictionaryInputStream = new ObjectInputStream(new FileInputStream(termDictionaryFile));
@@ -101,9 +98,12 @@ class InvertedIndex {
             tokenDictionary = (HashSet<String>) tokenDictionaryInputStream.readObject();
             termDictionary = (HashMap<String, Integer>) termDictionaryInputStream.readObject();
             docLen = (HashMap<Integer, Double>) docLenInputStream.readObject();
-        } catch (IOException | ClassNotFoundException e) {
+        }
+        catch (IOException | ClassNotFoundException e)
+        {
             build(documentCollectionDirectory);
-            try {
+            try
+            {
                 ObjectOutputStream invertedIndexOutputStream = new ObjectOutputStream(new FileOutputStream(invertedIndexFile));
                 ObjectOutputStream tokenDictionaryOutputStream = new ObjectOutputStream(new FileOutputStream(tokenDictionaryFile));
                 ObjectOutputStream termDictionaryOutputStream = new ObjectOutputStream(new FileOutputStream(termDictionaryFile));
@@ -113,40 +113,48 @@ class InvertedIndex {
                 tokenDictionaryOutputStream.writeObject(tokenDictionary);
                 termDictionaryOutputStream.writeObject(termDictionary);
                 docLenOutputStream.writeObject(docLen);
-            } catch (IOException e1) {
+            }
+            catch (IOException e1)
+            {
                 e1.printStackTrace();
             }
         }
         System.out.println("finished in " + (System.currentTimeMillis() - startTime) + "ms");
     }
 
-    private static void build(String documentCollectionDirectory) {
+    private static void build(String documentCollectionDirectory)
+    {
         File dir = new File(documentCollectionDirectory);
         assert dir.isDirectory();
 
         String[] files = dir.list();
 
         assert files != null;
-        for (String file : files) {
-            if (!file.endsWith(".html")) {
+        for (String file : files)
+        {
+            if (!file.endsWith(".html"))
+            {
                 continue;
             }
             int docId = Integer.parseInt(file.split("\\.")[0]);
             String file_name = dir + "/" + file;
             HashMap<String, Integer> fileVector = new HashMap<>();
-            try {
+            try
+            {
                 BufferedReader reader = new BufferedReader(new FileReader(new File(file_name)));
                 String content;
                 int position = 0;
-                while ((content = reader.readLine()) != null) {
+                while ((content = reader.readLine()) != null)
+                {
                     String[] words = content.trim().split("(,\\s)|(\\.\\s)|\"| ");
-                    for (String word : words) {
-
+                    for (String word : words)
+                    {
                         if (word == null || word.isEmpty())
                             continue;
 
                         String token = getToken(word.trim().toLowerCase());
-                        if (token == null) {
+                        if (token == null)
+                        {
                             position++;
                             continue;
                         }
@@ -156,7 +164,8 @@ class InvertedIndex {
                          */
                         tokenDictionary.add(token);
 
-                        if (Stopword.stopwrods.contains(token)) {
+                        if (Stopword.stopwrods.contains(token))
+                        {
                             position++;
                             continue;
                         }
@@ -173,21 +182,28 @@ class InvertedIndex {
                         else
                             termDictionary.put(term, 1);
 
-                        if (invertedIndex.containsKey(term)) {
+                        if (invertedIndex.containsKey(term))
+                        {
                             TreeMap<Integer, ArrayList<Integer>> index = invertedIndex.get(term);
-                            if (index.containsKey(docId)) {
+                            if (index.containsKey(docId))
+                            {
                                 invertedIndex.get(term).get(docId).add(position);
                                 fileVector.put(term, invertedIndex.get(term).get(docId).size());
-                            } else {
+                            }
+                            else
+                            {
                                 ArrayList<Integer> positions = new ArrayList<>();
                                 positions.add(position);
                                 index.put(docId, positions);
                                 fileVector.put(term, 1);
                             }
-                        } else {
+                        }
+                        else
+                        {
                             ArrayList<Integer> positions = new ArrayList<>();
                             positions.add(position);
-                            invertedIndex.put(term, new TreeMap<Integer, ArrayList<Integer>>() {{
+                            invertedIndex.put(term, new TreeMap<Integer, ArrayList<Integer>>()
+                            {{
                                 put(docId, positions);
                             }});
                             fileVector.put(term, 1);
@@ -197,14 +213,17 @@ class InvertedIndex {
                 }
 
                 double len = 0.0;
-                for (Map.Entry entry : fileVector.entrySet()) {
+                for (Map.Entry entry : fileVector.entrySet())
+                {
                     len += pow(1.0 + log10((Integer) entry.getValue()), 2);
                 }
 
                 docLen.put(docId, sqrt(len));
 
                 reader.close();
-            } catch (IOException e) {
+            }
+            catch (IOException e)
+            {
                 e.printStackTrace();
             }
         }
@@ -218,8 +237,10 @@ class InvertedIndex {
      */
     private static String getToken(String token)
     {
-        if (token.endsWith("'s"))
-            token = token.substring(0, token.length() - 2);
+        if (token.startsWith("&lt;"))
+            token = token.substring(4);
+        if (token.isEmpty())
+            return null;
         while (Punctuations.contains(token.charAt(0)))
         {
             token = token.substring(1);
@@ -232,11 +253,14 @@ class InvertedIndex {
             if (token.isEmpty())
                 return null;
         }
+        if (token.endsWith("'s"))
+            token = token.substring(0, token.length() - 2);
         return token;
     }
 
 
-    static int getDf(String term) {
+    static int getDf(String term)
+    {
         if (!termDictionary.containsKey(term))
             return 0;
         else return invertedIndex.get(term).size();
